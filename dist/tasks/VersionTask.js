@@ -70,12 +70,14 @@ var VersionTask = function (_Elixir$Task) {
 
             this.recordStep('Versioning');
 
-            var oldManifest = this.buildPath + '/rev-manifest.json';
-            if (!fs.existsSync(oldManifest)) return;
-            oldManifest = JSON.parse(fs.readFileSync(oldManifest));
+            var oldManifestUri = this.buildPath + '/rev-manifest.json';
+            var oldManifest = null;
+            if (fs.existsSync(oldManifestUri)) {
+                oldManifest = JSON.parse(fs.readFileSync(oldManifestUri));
+            }
 
             return gulp.src(this.src.path, { base: './' + this.publicPath }).pipe($.rev()).pipe(this.updateVersionedPathInFiles($)).pipe(gulp.dest(this.buildPath)).pipe($.rev.manifest()).pipe(this.saveAs(gulp)).on('end', function () {
-                _this2.copyMaps.bind(_this2);
+                _this2.copyMaps();
                 _this2.deleteManifestFiles(oldManifest);
             });
         }
@@ -107,12 +109,15 @@ var VersionTask = function (_Elixir$Task) {
         }
 
         /**
-         * Empty all relevant files from the build directory.
+         * 删除 old manifest 中，无用的文件
          */
 
     }, {
         key: 'deleteManifestFiles',
         value: function deleteManifestFiles(oldManifest) {
+
+            if (!oldManifest) return;
+
             var manifest = this.buildPath + '/rev-manifest.json';
 
             if (!fs.existsSync(manifest)) return;
@@ -120,7 +125,7 @@ var VersionTask = function (_Elixir$Task) {
             manifest = JSON.parse(fs.readFileSync(manifest));
 
             for (var key in oldManifest) {
-                if (!manifest[key]) {
+                if (!manifest[key] || manifest[key] != oldManifest[key]) {
                     del.sync(this.buildPath + '/' + oldManifest[key], { force: true });
                 }
             }

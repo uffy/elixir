@@ -44,9 +44,11 @@ class VersionTask extends Elixir.Task {
     gulpTask($) {
         this.recordStep('Versioning');
 
-        let oldManifest = `${this.buildPath}/rev-manifest.json`;
-        if (! fs.existsSync(oldManifest)) return;
-        oldManifest = JSON.parse(fs.readFileSync(oldManifest));
+        let oldManifestUri = `${this.buildPath}/rev-manifest.json`;
+        let oldManifest = null;
+        if ( fs.existsSync(oldManifestUri)){
+            oldManifest = JSON.parse(fs.readFileSync(oldManifestUri));
+        }
 
         return (
             gulp
@@ -57,7 +59,7 @@ class VersionTask extends Elixir.Task {
             .pipe($.rev.manifest())
             .pipe(this.saveAs(gulp))
             .on('end', ()=>{
-                this.copyMaps.bind(this)
+                this.copyMaps();
                 this.deleteManifestFiles(oldManifest);
             })
         );
@@ -87,9 +89,12 @@ class VersionTask extends Elixir.Task {
 
 
     /**
-     * Empty all relevant files from the build directory.
+     * 删除 old manifest 中，无用的文件
      */
     deleteManifestFiles(oldManifest) {
+
+        if( !oldManifest ) return;
+
         let manifest = `${this.buildPath}/rev-manifest.json`;
 
         if (! fs.existsSync(manifest)) return;
@@ -97,7 +102,7 @@ class VersionTask extends Elixir.Task {
         manifest = JSON.parse(fs.readFileSync(manifest));
 
         for (let key in oldManifest) {
-            if( !manifest[key] ){
+            if( !manifest[key] || manifest[key] != oldManifest[key] ){
                 del.sync(`${this.buildPath}/${oldManifest[key]}`, { force: true });
             }
         }
