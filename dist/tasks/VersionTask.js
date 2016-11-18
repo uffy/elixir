@@ -66,11 +66,18 @@ var VersionTask = function (_Elixir$Task) {
     }, {
         key: 'gulpTask',
         value: function gulpTask($) {
+            var _this2 = this;
+
             this.recordStep('Versioning');
 
-            // this.deleteManifestFiles();
+            var oldManifest = this.buildPath + '/rev-manifest.json';
+            if (!fs.existsSync(oldManifest)) return;
+            oldManifest = JSON.parse(fs.readFileSync(oldManifest));
 
-            return gulp.src(this.src.path, { base: './' + this.publicPath }).pipe($.rev()).pipe(this.updateVersionedPathInFiles($)).pipe(gulp.dest(this.buildPath)).pipe($.rev.manifest()).pipe(this.saveAs(gulp)).on('end', this.copyMaps.bind(this));
+            return gulp.src(this.src.path, { base: './' + this.publicPath }).pipe($.rev()).pipe(this.updateVersionedPathInFiles($)).pipe(gulp.dest(this.buildPath)).pipe($.rev.manifest()).pipe(this.saveAs(gulp)).on('end', function () {
+                _this2.copyMaps.bind(_this2);
+                _this2.deleteManifestFiles(oldManifest);
+            });
         }
 
         /**
@@ -105,15 +112,17 @@ var VersionTask = function (_Elixir$Task) {
 
     }, {
         key: 'deleteManifestFiles',
-        value: function deleteManifestFiles() {
+        value: function deleteManifestFiles(oldManifest) {
             var manifest = this.buildPath + '/rev-manifest.json';
 
             if (!fs.existsSync(manifest)) return;
 
             manifest = JSON.parse(fs.readFileSync(manifest));
 
-            for (var key in manifest) {
-                del.sync(this.buildPath + '/' + manifest[key], { force: true });
+            for (var key in oldManifest) {
+                if (!manifest[key]) {
+                    del.sync(this.buildPath + '/' + oldManifest[key], { force: true });
+                }
             }
         }
 
@@ -124,8 +133,11 @@ var VersionTask = function (_Elixir$Task) {
     }, {
         key: 'copyMaps',
         value: function copyMaps() {
-            var _this2 = this;
+            var _this3 = this;
 
+            if (Elixir.config.production) {
+                return;
+            }
             this.recordStep('Copying Source Maps');
 
             this.src.path.forEach(function (file) {
@@ -134,7 +146,7 @@ var VersionTask = function (_Elixir$Task) {
 
                     files.filter(function (file) {
                         return fs.existsSync(file + '.map');
-                    }).forEach(_this2.copyMap.bind(_this2));
+                    }).forEach(_this3.copyMap.bind(_this3));
                 });
             });
         }
@@ -148,6 +160,7 @@ var VersionTask = function (_Elixir$Task) {
     }, {
         key: 'copyMap',
         value: function copyMap(srcMap) {
+
             var destMap = srcMap.replace(this.publicPath, this.buildPath + '/');
 
             fs.createReadStream(srcMap + '.map').pipe(fs.createWriteStream(destMap + '.map'));

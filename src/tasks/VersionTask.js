@@ -44,7 +44,9 @@ class VersionTask extends Elixir.Task {
     gulpTask($) {
         this.recordStep('Versioning');
 
-        // this.deleteManifestFiles();
+        let oldManifest = `${this.buildPath}/rev-manifest.json`;
+        if (! fs.existsSync(oldManifest)) return;
+        oldManifest = JSON.parse(fs.readFileSync(oldManifest));
 
         return (
             gulp
@@ -54,7 +56,10 @@ class VersionTask extends Elixir.Task {
             .pipe(gulp.dest(this.buildPath))
             .pipe($.rev.manifest())
             .pipe(this.saveAs(gulp))
-            .on('end', this.copyMaps.bind(this))
+            .on('end', ()=>{
+                this.copyMaps.bind(this)
+                this.deleteManifestFiles(oldManifest);
+            })
         );
     }
 
@@ -84,15 +89,17 @@ class VersionTask extends Elixir.Task {
     /**
      * Empty all relevant files from the build directory.
      */
-    deleteManifestFiles() {
+    deleteManifestFiles(oldManifest) {
         let manifest = `${this.buildPath}/rev-manifest.json`;
 
         if (! fs.existsSync(manifest)) return;
 
         manifest = JSON.parse(fs.readFileSync(manifest));
 
-        for (let key in manifest) {
-            del.sync(`${this.buildPath}/${manifest[key]}`, { force: true });
+        for (let key in oldManifest) {
+            if( !manifest[key] ){
+                del.sync(`${this.buildPath}/${oldManifest[key]}`, { force: true });
+            }
         }
     }
 
@@ -101,6 +108,9 @@ class VersionTask extends Elixir.Task {
      * Copy source maps to the build directory.
      */
     copyMaps() {
+        if( Elixir.config.production ){
+            return ;
+        }
         this.recordStep('Copying Source Maps');
 
         this.src.path.forEach(file => {
@@ -120,6 +130,8 @@ class VersionTask extends Elixir.Task {
      * @param {string} srcMap
      */
     copyMap(srcMap) {
+
+
         let destMap = srcMap.replace(this.publicPath, this.buildPath +'/');
 
         fs.createReadStream(`${srcMap}.map`)
