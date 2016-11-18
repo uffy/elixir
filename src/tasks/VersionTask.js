@@ -44,7 +44,7 @@ class VersionTask extends Elixir.Task {
     gulpTask($) {
         this.recordStep('Versioning');
 
-        this.deleteManifestFiles();
+        // this.deleteManifestFiles();
 
         return (
             gulp

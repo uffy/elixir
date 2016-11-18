@@ -1,3 +1,5 @@
+require("gulp-changed").global();
+
 global.gulp = require('gulp');
 global.parse = require('parse-filepath');
 
