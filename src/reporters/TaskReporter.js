@@ -82,7 +82,9 @@ class TaskReporter {
             return gutil.colors.green(file);
         }
 
-        return gutil.colors.bgRed(file);
+        Elixir.log.message(gutil.colors.bgRed("Exit: file not exists!"));
+        Elixir.log.message(file);
+        process.exit(1);
     }
 
 
