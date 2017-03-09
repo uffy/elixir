@@ -115,7 +115,9 @@ var TaskReporter = function () {
                 return _gulpUtil2.default.colors.green(file);
             }
 
-            return _gulpUtil2.default.colors.bgRed(file);
+            Elixir.log.message(_gulpUtil2.default.colors.bgRed("Exit: file not exists!"));
+            Elixir.log.message(file);
+            process.exit(1);
         }
 
         /**
