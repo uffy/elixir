@@ -18,5 +18,5 @@ Laravel Elixir is open-sourced software licensed under the [MIT license](http://
 # 此 Fork 版本在原 Laravel-Elixir 6.0.0-14 基础，实现： 
 
 1. 只写入更改过的文件。
-2. gulp 后，删除久 rev-manifest.json 引用的无效文件。
+2. gulp 后，删除旧 rev-manifest.json 引用的无效文件。
 3. production 模式下，不生成 map 文件。
